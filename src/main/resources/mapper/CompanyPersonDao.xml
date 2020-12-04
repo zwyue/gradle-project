@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhu.gradleproject.mapper.CompanyPersonDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zhu.gradleproject.entity.CompanyPerson">
+        <id column="id" property="id" />
+        <result column="corp_id" property="corpId" />
+        <result column="per_id" property="perId" />
+        <result column="per_name" property="perName" />
+        <result column="person_cert" property="personCert" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, corp_id, per_id, per_name, person_cert
+    </sql>
+
+</mapper>

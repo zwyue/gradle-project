@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhu.gradleproject.mapper.CompanyInfoDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zhu.gradleproject.entity.CompanyInfo">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="credit_code" property="creditCode" />
+        <result column="district" property="district" />
+        <result column="district_name" property="districtName" />
+        <result column="create_time" property="createTime" />
+        <result column="last_update" property="lastUpdate" />
+        <result column="performance_total" property="performanceTotal" />
+        <result column="reg_person_num" property="regPersonNum" />
+        <result column="license_capital" property="licenseCapital" />
+        <association property="companyPersonRelation" select="selectCompanyPersonRelation" javaType="map" column="id">
+        </association>
+        <collection property="companyAwards" ofType="com.zhu.gradleproject.entity.CompanyAward"
+                    javaType="list" select="queryCompanyAwards" column="id">
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, credit_code, district, district_name, create_time, last_update, performance_total, reg_person_num, license_capital
+    </sql>
+
+    <select id="queryCompanyAwards" resultType="com.zhu.gradleproject.entity.CompanyAward">
+        select `level` , `name` , award_time from company_award where corp_id = #{value}
+    </select>
+
+    <select id="selectCompanyPersonRelation" resultType="map">
+        select 'company' `name` from company_award limit 1
+    </select>
+</mapper>

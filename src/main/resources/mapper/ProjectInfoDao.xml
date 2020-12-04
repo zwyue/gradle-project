@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhu.gradleproject.mapper.ProjectInfoDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zhu.gradleproject.entity.ProjectInfo">
+        <id column="id" property="id" />
+        <result column="prj_num" property="prjNum" />
+        <result column="corp_id" property="corpId" />
+        <result column="per_id" property="perId" />
+        <result column="prj_name" property="prjName" />
+        <result column="all_invest" property="allInvest" />
+        <result column="begin_date" property="beginDate" />
+        <result column="end_date" property="endDate" />
+        <collection property="tenderInfoList" ofType="com.zhu.gradleproject.entity.TenderInfo"
+                    javaType="list" select="queryTenderInfo" column="{prjNum=prj_num , corpId=corp_id}">
+        </collection>
+        <collection property="builderLicences" ofType="com.zhu.gradleproject.entity.BuilderLicence"
+                    javaType="list" select="queryBuilderLicences" column="{prjNum=prj_num , corpId=corp_id}">
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, prj_num, corp_id, per_id, prj_name, all_invest, begin_date, end_date
+    </sql>
+
+    <select id="queryTenderInfo" resultType="com.zhu.gradleproject.entity.TenderInfo">
+        select
+            tender_money
+            ,tender_result_date
+            ,area
+        from tender_info where prj_num = #{prjNum} and corp_id = #{corpId}
+    </select>
+
+    <select id="queryBuilderLicences" resultType="com.zhu.gradleproject.entity.BuilderLicence">
+        select
+            contract_money
+            ,release_date
+            ,area
+        from builder_licence where prj_num = #{prjNum} and corp_id = #{corpId}
+    </select>
+</mapper>
