@@ -7,9 +7,6 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.jdbc.Driver
-    schema:
-      - classpath: db/color.sql
-    initialization-mode: always
 
   elasticsearch:
     rest:
