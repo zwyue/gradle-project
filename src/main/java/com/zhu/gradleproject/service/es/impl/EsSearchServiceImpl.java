@@ -17,7 +17,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.util.CollectionUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.rest.RestStatus;
@@ -39,8 +38,9 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.zhu.gradleproject.util.AnnotationUtil.getIndexName;
+import static com.zhu.gradleproject.util.AnnotationUtil.*;
 import static com.zhu.gradleproject.util.BeanTools.culInitialCapacity;
+import static org.elasticsearch.index.query.QueryBuilders.multiMatchQuery;
 import static org.elasticsearch.search.fetch.subphase.FetchSourceContext.DO_NOT_FETCH_SOURCE;
 
 /**
@@ -169,24 +169,12 @@ public class EsSearchServiceImpl implements EsSearchService {
     @Override
     public List<Map<String, Object>> search(Integer size, QueryBuilder query, String index, String... includeFields) {
         try {
-            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-            //条件
-            sourceBuilder.query(query).size(size);
-
-            //返回和排除列
-            if (!CollectionUtils.isEmpty(includeFields)) {
-                sourceBuilder.fetchSource(includeFields, null);
-            }
-
-            SearchRequest request = new SearchRequest();
-            //索引
-            request.indices(index);
-            //各种组合条件
-            request.source(sourceBuilder);
-
-            //请求
-            log.info(request.source().toString());
-            SearchResponse response = this.restHighLevelClient.search(request, RequestOptions.DEFAULT);
+            SearchResponse response = this.restHighLevelClient.search(
+                    new SearchRequest().indices(index).source(
+                            new SearchSourceBuilder().query(query).size(size)
+                                    .fetchSource(includeFields, null)
+                    )
+                    , RequestOptions.DEFAULT);
 
             //解析返回
             if (response.status() != RestStatus.OK || response.getHits().getTotalHits().value <= 0) {
@@ -215,6 +203,32 @@ public class EsSearchServiceImpl implements EsSearchService {
             attach.setIncludes(includeField);
             return this.search(parentQueryBuilder,null, attach, index);
         }
+    }
+
+    @Override
+    public <T>List<Map<String, Object>> associate(Integer size, T obj ,String inputStr) {
+        try {
+
+            //请求
+            SearchResponse rp = this.restHighLevelClient.search(
+                    new SearchRequest().indices(getIndexName(obj.getClass())).source(
+                            new SearchSourceBuilder()
+                                    .query(multiMatchQuery(inputStr,getSearchFields(obj)))
+                                    .size(size).fetchSource(getIncludeFields(obj), getExcludeFields(obj))
+                    ) , RequestOptions.DEFAULT);
+
+            //解析返回
+            if (rp.status() != RestStatus.OK || rp.getHits().getTotalHits().value <= 0) {
+                return Collections.emptyList();
+            }
+
+            //获取source
+            return Arrays.stream(rp.getHits().getHits()).map(SearchHit::getSourceAsMap).collect(Collectors.toList());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return Collections.emptyList();
     }
 
 

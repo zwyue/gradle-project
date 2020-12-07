@@ -1,11 +1,10 @@
 package com.zhu.gradleproject.util;
 
-import com.zhu.gradleproject.annotation.AttributeValue;
-import com.zhu.gradleproject.annotation.ESIndexData;
-import com.zhu.gradleproject.annotation.EsId;
-import com.zhu.gradleproject.annotation.EsRoutingId;
+import com.zhu.gradleproject.annotation.*;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <pre>
@@ -65,6 +64,67 @@ public class AnnotationUtil {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取 标注 IncludeField 的字段名称集合
+     * @param obj 对象
+     * @return String
+     * @throws Exception e
+     */
+    public static String[] getIncludeFields(Object obj) {
+        Field[] fields = obj.getClass().getDeclaredFields();
+
+        List<String> fieldNames = new ArrayList<>();
+        for (Field f : fields) {
+            f.setAccessible(true);
+            IncludeField includeField = f.getAnnotation(IncludeField.class);
+            if (includeField != null) {
+                fieldNames.add(f.getName()) ;
+            }
+        }
+        return fieldNames.size()>0 ? fieldNames.toArray(new String[0]) : null;
+    }
+
+    /**
+     * 获取 标注 IncludeField 的字段名称集合
+     * @param obj 对象
+     * @return String
+     * @throws Exception e
+     */
+    public static String[] getExcludeFields(Object obj) {
+        Field[] fields = obj.getClass().getDeclaredFields();
+
+        List<String> fieldNames = new ArrayList<>();
+        for (Field f : fields) {
+            f.setAccessible(true);
+            ExcludeField includeField = f.getAnnotation(ExcludeField.class);
+            if (includeField != null) {
+                fieldNames.add(f.getName()) ;
+            }
+        }
+        return fieldNames.size()>0 ? fieldNames.toArray(new String[0]) : null;
+    }
+
+    /**
+     * 获取查询字段名称
+     *
+     * @author zwy
+     * @date 12/7/2020 2:20 PM
+     */
+    public static String[] getSearchFields(Object obj) {
+        List<String> fieldNames = new ArrayList<>();
+        Field[] fields = obj.getClass().getDeclaredFields();
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            SearchField searchField = field.getAnnotation(SearchField.class);
+
+            if (searchField != null) {
+                fieldNames.add(field.getName());
+            }
+        }
+        return fieldNames.toArray(new String[0]);
     }
 
 

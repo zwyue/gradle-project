@@ -3,7 +3,6 @@ package com.zhu.gradleproject.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.zhu.gradleproject.annotation.ESIndexData;
 import com.zhu.gradleproject.annotation.EsId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,7 +23,6 @@ import java.util.Map;
 @Data
   @EqualsAndHashCode(callSuper = false)
     @TableName(value = "company_info" ,resultMap = "BaseResultMap")
-@ESIndexData(indexName = "company_info")
 public class CompanyInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;

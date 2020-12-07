@@ -67,4 +67,20 @@ public interface EsSearchService {
      * @date 9/3/2020 5:15 PM
      */
     PageList<JsonObject> searchHasInnerHits(BoolQueryBuilder parentQueryBuilder, PageSortHighLight psh, String[] strings, String index) throws Exception;
+
+    /**
+     * 关联查询
+     *
+     * @param size 分页大小
+     *
+     * @param obj 包含查询字段的实体 （工具人罢了）
+     *
+     * @param inputStr 查询输入
+     *
+     * @return List<Map<String, Object>>
+     *
+     * @author zwy
+     * @date 12/7/2020 9:36 AM
+     */
+    <T>List<Map<String, Object>> associate(Integer size ,T obj , String inputStr) ;
 }

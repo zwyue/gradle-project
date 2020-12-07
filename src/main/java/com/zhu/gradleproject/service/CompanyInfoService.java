@@ -2,9 +2,11 @@ package com.zhu.gradleproject.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zhu.gradleproject.dto.QueryDto;
 import com.zhu.gradleproject.entity.CompanyInfo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -17,12 +19,11 @@ import java.util.List;
 public interface CompanyInfoService extends IService<CompanyInfo> {
 
     /**
-     * @param ids 查询id
      *
      * @author zwy
      * @date 12/2/2020 4:10 PM
      */
-    List<JSONObject> queryFromEs(List<String> ids) throws Exception;
+    List<JSONObject> queryFromEs(QueryDto queryDto) throws Exception;
 
     /**
      * 存储企业信息至ES
@@ -64,4 +65,16 @@ public interface CompanyInfoService extends IService<CompanyInfo> {
      * @date 12/3/2020 6:24 PM
      */
     void deleteIndex(String[] indexName);
+
+    /**
+     * 输入框联想词关联
+     *
+     * @param inputStr 输入词
+     *
+     * @param size 结果返回数量
+     *
+     * @author zwy
+     * @date 12/7/2020 9:32 AM
+     */
+    List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) throws Exception;
 }

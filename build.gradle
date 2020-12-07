@@ -87,6 +87,16 @@ dependencies {
 
     // https://mvnrepository.com/artifact/io.swagger/swagger-annotations
     compile group: 'io.swagger', name: 'swagger-annotations', version: '1.6.2'
+
+    // https://mvnrepository.com/artifact/com.github.houbb/pinyin
+    compile group: 'com.github.houbb', name: 'pinyin', version: '0.1.5'
+
+    // https://mvnrepository.com/artifact/cn.hutool/hutool-all
+    compile group: 'cn.hutool', name: 'hutool-all', version: '5.5.2'
+
+    // javax是扩展类，至少java8不需要通过maven 依赖手动导入，此项目是java版本11，所以需要
+    // https://mvnrepository.com/artifact/javax.annotation/jsr250-api
+//    compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
 }
 
 //编译JAVA文件时采用UTF-8
