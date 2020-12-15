@@ -83,7 +83,8 @@ dependencies {
     compile group: 'com.alibaba', name: 'fastjson', version: '1.2.75'
 
     // https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client
-    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '7.10.0'
+    //7.10以上的版本，logger报错
+    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '7.9.3'
 
     // https://mvnrepository.com/artifact/io.swagger/swagger-annotations
     compile group: 'io.swagger', name: 'swagger-annotations', version: '1.6.2'

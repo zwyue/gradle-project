@@ -3,6 +3,7 @@ package com.zhu.gradleproject.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,12 +16,15 @@ import com.zhu.gradleproject.dto.QueryDto;
 import com.zhu.gradleproject.entity.CompanyInfo;
 import com.zhu.gradleproject.entity.CompanyPerson;
 import com.zhu.gradleproject.entity.ProjectInfo;
+import com.zhu.gradleproject.entity.es.PageSortHighLight;
+import com.zhu.gradleproject.entity.es.Sort;
 import com.zhu.gradleproject.mapper.CompanyInfoDao;
-import com.zhu.gradleproject.service.CompanyInfoService;
 import com.zhu.gradleproject.service.CompanyPersonService;
+import com.zhu.gradleproject.service.CompanyService;
 import com.zhu.gradleproject.service.es.EsDataSaveService;
-import com.zhu.gradleproject.service.es.EsSearchService;
+import com.zhu.gradleproject.service.es.EsQueryService;
 import com.zhu.gradleproject.util.EsMappingCorp;
+import com.zhu.gradleproject.util.PageList;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
@@ -28,6 +32,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.join.query.HasChildQueryBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +43,6 @@ import java.util.stream.Collectors;
 import static com.zhu.gradleproject.constant.Constant.LETTER_REGEX;
 import static com.zhu.gradleproject.util.BeanTools.culInitialCapacity;
 import static org.elasticsearch.index.query.QueryBuilders.*;
-import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
 
 /**
  * <p>
@@ -50,10 +54,10 @@ import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
  */
 @Service
 @Log4j2
-public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyInfo> implements CompanyInfoService {
+public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyInfo> implements CompanyService {
 
     @Resource
-    private EsSearchService esSearchService ;
+    private EsQueryService esSearchService ;
 
     @Resource
     private EsDataSaveService esDataSaveService ;
@@ -68,7 +72,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     private ProjectInfoServiceImpl projectInfoService ;
 
     @Override
-    public List<JSONObject> queryFromEs(QueryDto queryDto) throws Exception {
+    public PageList<JSONObject> queryFromEs(QueryDto queryDto) {
 
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 
@@ -87,10 +91,19 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
         Map<String,Object> awardLimit = queryDto.getAwardLimit() ;
         if(CollUtil.isNotEmpty(awardLimit)) {
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-            boolQueryBuilder.must(rangeQuery("companyAwards.awardTime").from(awardLimit.get("awardTime")));
-            boolQueryBuilder.must(rangeQuery("companyAwards.name").from(awardLimit.get("name")));
-            boolQueryBuilder.must(rangeQuery("companyAwards.level").from(awardLimit.get("level")));
-            queryBuilder.must(nestedQuery("tenderInfoList",boolQueryBuilder, ScoreMode.Max));
+
+            if(ObjectUtil.isNotEmpty(awardLimit.get("awardTime"))){
+                boolQueryBuilder.must(rangeQuery("companyAwards.awardTime").from(awardLimit.get("awardTime")));
+            }
+
+            if(ObjectUtil.isNotEmpty(awardLimit.get("name"))){
+                boolQueryBuilder.must(matchQuery("companyAwards.name",awardLimit.get("name")));
+            }
+
+            if(ObjectUtil.isNotEmpty(awardLimit.get("level"))){
+                boolQueryBuilder.must(matchQuery("companyAwards.level",awardLimit.get("level")));
+            }
+            queryBuilder.must(nestedQuery("companyAwards",boolQueryBuilder, ScoreMode.Max));
         }
 
         Map<String,Object> perLimit = queryDto.getPerLimit();
@@ -129,7 +142,14 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
             queryBuilder.must(new HasChildQueryBuilder("corpProject", boolQueryBuilder, ScoreMode.Avg));
         }
 
-        return esSearchService.search(QueryBuilders.matchAllQuery(),JSONObject.class,"company_info") ;
+        PageSortHighLight psh = new PageSortHighLight(queryDto.getPageNum(), queryDto.getPageSize());
+        psh.setIndex("company_info");
+        psh.setEsQueryBuilder(queryBuilder);
+
+        Sort.Order orderScore = new Sort.Order(SortOrder.DESC, "_score");
+        psh.setSort(new Sort(orderScore));
+
+        return esSearchService.queryPageList(JSONObject.class,psh) ;
     }
 
     @Override
@@ -242,7 +262,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) throws Exception {
+    public List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) {
 
         //是否包含汉字，用于拼音匹配
         if(inputStr.matches(LETTER_REGEX)) {

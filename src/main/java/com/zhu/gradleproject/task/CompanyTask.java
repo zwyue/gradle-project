@@ -1,6 +1,6 @@
 package com.zhu.gradleproject.task;
 
-import com.zhu.gradleproject.service.CompanyInfoService;
+import com.zhu.gradleproject.service.CompanyService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ import javax.annotation.Resource;
 public class CompanyTask {
 
     @Resource
-    private CompanyInfoService companyInfoService ;
+    private CompanyService companyInfoService ;
 
     @PostMapping("/base/save")
     public String saveCompanyBaseInfo(){

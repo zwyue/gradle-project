@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.zhu.gradleproject.dto.QueryDto;
 import com.zhu.gradleproject.entity.CompanyInfo;
+import com.zhu.gradleproject.util.PageList;
 
 import java.util.List;
 import java.util.Map;
@@ -16,14 +17,19 @@ import java.util.Map;
  * @author zwy
  * @since 2020-12-02
  */
-public interface CompanyInfoService extends IService<CompanyInfo> {
+public interface CompanyService extends IService<CompanyInfo> {
 
     /**
+     * es 列表查询
+     *
+     * @param queryDto 查询条件
+     *
+     * @return PageList<JSONObject>
      *
      * @author zwy
      * @date 12/2/2020 4:10 PM
      */
-    List<JSONObject> queryFromEs(QueryDto queryDto) throws Exception;
+    PageList<JSONObject> queryFromEs(QueryDto queryDto) ;
 
     /**
      * 存储企业信息至ES
@@ -73,8 +79,10 @@ public interface CompanyInfoService extends IService<CompanyInfo> {
      *
      * @param size 结果返回数量
      *
+     * @return List<Map<String, Object>>
+     *
      * @author zwy
      * @date 12/7/2020 9:32 AM
      */
-    List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) throws Exception;
+    List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) ;
 }

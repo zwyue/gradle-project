@@ -1,6 +1,8 @@
 package com.zhu.gradleproject.entity.es;
 
+import com.zhu.gradleproject.annotation.AttributeValue;
 import lombok.Data;
+import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * <pre>
@@ -16,6 +18,12 @@ public class PageSortHighLight {
     private int pageSize;
     Sort sort = new Sort();
     private HighLight highLight = new HighLight();
+
+    @AttributeValue
+    private QueryBuilder esQueryBuilder ;
+
+    @AttributeValue
+    private String index ;
 
     public PageSortHighLight(int currentPage, int pageSize) {
         this.currentPage = currentPage;

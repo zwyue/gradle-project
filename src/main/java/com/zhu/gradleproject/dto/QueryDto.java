@@ -28,4 +28,8 @@ public class QueryDto {
     private Map<String,Object> corpPrjLimit ;
 
     private Map<String,Object> perPrjLimit ;
+
+    private Integer pageSize = 5 ;
+
+    private Integer pageNum = 1 ;
 }
