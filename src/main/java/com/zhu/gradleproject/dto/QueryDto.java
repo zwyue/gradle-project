@@ -17,6 +17,8 @@ public class QueryDto {
 
     private String name ;
 
+    private String perName ;
+
     private String district ;
 
     private Float licenseCapital ;

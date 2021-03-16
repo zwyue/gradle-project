@@ -6,6 +6,7 @@ import com.zhu.gradleproject.dto.QueryDto;
 import com.zhu.gradleproject.entity.CompanyInfo;
 import com.zhu.gradleproject.util.PageList;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/2/2020 3:03 PM
      */
-    void saveCompanyBaseInfoToEs() ;
+    void saveCompanyBaseInfoToEs() throws Exception;
 
     /**
      * 保存企业人员信息至ES
@@ -45,7 +46,7 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/3/2020 9:02 AM
      */
-    void saveCompanyPersonInfoToEs();
+    void saveCompanyPersonInfoToEs() throws Exception;
 
     /**
      * 保存企业业绩
@@ -53,7 +54,7 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/3/2020 7:20 PM
      */
-    void saveCompanyProjectInfoToEs();
+    void saveCompanyProjectInfoToEs() throws Exception;
 
     /**
      * 保存企业人员业绩
@@ -61,7 +62,7 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/4/2020 11:26 AM
      */
-    void saveCompanyPersonProjectInfoToEs();
+    void saveCompanyPersonProjectInfoToEs() throws Exception;
 
     /**
      * 删除索引
@@ -70,7 +71,7 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/3/2020 6:24 PM
      */
-    void deleteIndex(String[] indexName);
+    void deleteIndex(String[] indexName) throws IOException;
 
     /**
      * 输入框联想词关联
@@ -84,5 +85,13 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 12/7/2020 9:32 AM
      */
-    List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) ;
+    List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) throws IOException;
+
+    /**
+     * 查询人员及其一项业绩
+     *
+     * @author zwy
+     * @date 3/16/2021 4:51 PM
+     */
+    List<Map<String, Object>> parentWithChild(QueryDto queryDto) throws Exception;
 }

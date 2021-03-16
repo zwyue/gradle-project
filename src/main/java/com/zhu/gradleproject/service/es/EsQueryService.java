@@ -1,9 +1,12 @@
 package com.zhu.gradleproject.service.es;
 
+import com.alibaba.fastjson.JSONObject;
 import com.zhu.gradleproject.entity.es.PageSortHighLight;
 import com.zhu.gradleproject.util.PageList;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +51,7 @@ public interface EsQueryService {
      * @author zwy
      * @date 12/7/2020 9:36 AM
      */
-    <T>List<Map<String, Object>> associate(Integer size ,T obj , String inputStr) ;
+    <T>List<Map<String, Object>> associate(Integer size ,T obj , String inputStr) throws IOException;
 
 
 
@@ -65,4 +68,12 @@ public interface EsQueryService {
      * @return PageList 返回列表
      */
     <T> PageList<T> queryPageList(Class<T> clazz  , PageSortHighLight pageSortHighLight) ;
+
+    /**
+     * 父文档携带子文档
+     *
+     * @author zwy
+     * @date 9/3/2020 5:15 PM
+     */
+    PageList<JSONObject> searchHasInnerHits(BoolQueryBuilder parentQueryBuilder, PageSortHighLight psh, String[] strings, String index) throws Exception;
 }

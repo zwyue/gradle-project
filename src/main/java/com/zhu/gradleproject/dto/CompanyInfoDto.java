@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static com.zhu.gradleproject.constant.Constant.ES_INDEX;
+
 /**
  * copyright     <a href="http://ditop.tech/>德拓科技</a>
  * <pre>
@@ -21,7 +23,7 @@ import java.util.Map;
  * @date 12/4/2020
  */
 @Data
-@ESIndexData(indexName = "company_info")
+@ESIndexData(indexName = ES_INDEX)
 public class CompanyInfoDto implements Serializable {
 
     private static final long serialVersionUID = 1L;

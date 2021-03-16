@@ -30,16 +30,21 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.InnerHitBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.join.query.HasChildQueryBuilder;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.zhu.gradleproject.constant.Constant.ES_INDEX;
 import static com.zhu.gradleproject.constant.Constant.LETTER_REGEX;
 import static com.zhu.gradleproject.util.BeanTools.culInitialCapacity;
 import static org.elasticsearch.index.query.QueryBuilders.*;
@@ -142,6 +147,9 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
             queryBuilder.must(new HasChildQueryBuilder("corpProject", boolQueryBuilder, ScoreMode.Avg));
         }
 
+        //保证查询结果一定是企业
+        queryBuilder.must(existsQuery("name"));
+
         PageSortHighLight psh = new PageSortHighLight(queryDto.getPageNum(), queryDto.getPageSize());
         psh.setIndex("company_info");
         psh.setEsQueryBuilder(queryBuilder);
@@ -153,7 +161,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public void saveCompanyBaseInfoToEs() {
+    public void saveCompanyBaseInfoToEs() throws Exception {
         QueryWrapper<CompanyInfo> queryWrapper = new QueryWrapper<>();
         queryWrapper.orderByDesc("create_time").select("*") ;
 
@@ -177,7 +185,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public void saveCompanyPersonInfoToEs() {
+    public void saveCompanyPersonInfoToEs() throws Exception {
         List<CompanyPerson> companyPersonList = companyPersonService.list();
         List<CompanyPersonDto> dtoList = new ArrayList<>();
 
@@ -204,7 +212,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public void saveCompanyProjectInfoToEs() {
+    public void saveCompanyProjectInfoToEs() throws Exception {
         List<ProjectInfo> projectInfos = projectInfoService.list() ;
 
         List<ProjectInfoDto> dtoList = new ArrayList<>();
@@ -229,7 +237,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public void saveCompanyPersonProjectInfoToEs() {
+    public void saveCompanyPersonProjectInfoToEs() throws Exception {
         List<ProjectInfo> projectInfos = projectInfoService.list() ;
 
         List<ProjectInfoDto> dtoList = new ArrayList<>();
@@ -257,12 +265,12 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public void deleteIndex(String[] indexName) {
+    public void deleteIndex(String[] indexName) throws IOException {
         esDataSaveService.deleteIndex(indexName);
     }
 
     @Override
-    public List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) {
+    public List<Map<String, Object>> associateWordSearch(String inputStr , Integer size) throws IOException {
 
         //是否包含汉字，用于拼音匹配
         if(inputStr.matches(LETTER_REGEX)) {
@@ -273,7 +281,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
             List<Map<String, Object>> keywords = new LinkedList<>(first);
             if (first.size() != size) {
                 List<Map<String, Object>> second = esSearchService.search(size, matchQuery("name", inputStr)
-                        , "company_info", "id", "name", "creditCode");
+                        , ES_INDEX, "id", "name", "creditCode");
                 if (CollectionUtil.isNotEmpty(second)) {
                     first.forEach(second::remove);
                     keywords.addAll(second.size() + first.size() > size ? second.subList(0, size - first.size()) : second);
@@ -283,5 +291,45 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
         }
 
         return esSearchService.associate(size,new CompanyInfoDto(),inputStr);
+    }
+
+    @Override
+    public List<Map<String, Object>> parentWithChild(QueryDto queryDto) throws Exception {
+
+        BoolQueryBuilder parentQueryBuilder = QueryBuilders.boolQuery();
+
+        Optional.ofNullable(queryDto.getPerName()).ifPresent(perName->
+            parentQueryBuilder.must(wildcardQuery("perName" ,"*"+perName+"*")));
+
+//        ScriptScoreFunctionBuilder scoreFunction = ScoreFunctionBuilders
+//                .scriptFunction("_score * doc['prjDate'].value.toInstant().toEpochMilli()");
+//
+        BoolQueryBuilder projectQuery = QueryBuilders.boolQuery();
+        projectQuery.must(existsQuery("prjName"));
+        projectQuery.must(nestedQuery("tenderInfoList",existsQuery("tenderInfoList"),ScoreMode.Avg));
+
+        HasChildQueryBuilder childQueryBuilder
+                = new HasChildQueryBuilder("personProject" ,projectQuery,ScoreMode.Max);
+
+        InnerHitBuilder innerHitBuilder = new InnerHitBuilder();
+        innerHitBuilder.setSize(1);
+        innerHitBuilder.addSort(SortBuilders.fieldSort("endDate").order(SortOrder.DESC));
+        innerHitBuilder.setFetchSourceContext(new FetchSourceContext(true,
+                new String[]{"tenderInfoList","prjName"},null));
+
+        childQueryBuilder.innerHit(innerHitBuilder);
+        parentQueryBuilder.must(childQueryBuilder);
+
+        Sort.Order order = new Sort.Order(SortOrder.DESC,"_score");
+
+        //分页
+        PageSortHighLight psh = new PageSortHighLight(queryDto.getPageNum(), queryDto.getPageSize());
+        //排序
+        psh.setSort(new Sort(order));
+
+        PageList<JSONObject> pageList = esSearchService.searchHasInnerHits(parentQueryBuilder, psh
+                ,new String[]{"perName","perId","personCerts"},ES_INDEX);
+
+        return null ;
     }
 }

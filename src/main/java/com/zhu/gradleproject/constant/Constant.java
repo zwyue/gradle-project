@@ -20,4 +20,7 @@ public class Constant {
      * @date 2019/12/9 17:53
      */
     public final static String LETTER_REGEX = "^[\u4e00-\u9fa5]+$" ;
+
+
+    public final static String ES_INDEX = "company_info" ;
 }

@@ -1,5 +1,6 @@
 package com.zhu.gradleproject.service.es.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.zhu.gradleproject.service.es.EsDataSaveService;
 import lombok.extern.log4j.Log4j2;
@@ -49,7 +50,7 @@ public class EsDataSaveServiceImpl implements EsDataSaveService {
         return !this.restHighLevelClient.indices().exists(request, RequestOptions.DEFAULT);
     }
 
-    private void createIndex(XContentBuilder mapping, String index) {
+    private void createIndex(XContentBuilder mapping, String index) throws IOException {
         CreateIndexRequest request = new CreateIndexRequest(index);
         request.settings(Settings.builder()
                 .put("index.number_of_shards", getSettings().get("shards"))
@@ -65,107 +66,90 @@ public class EsDataSaveServiceImpl implements EsDataSaveService {
 
         request.mapping(mapping);
 
-        try {
-            CreateIndexResponse createIndexResponse
-                    = this.restHighLevelClient.indices().create(request, RequestOptions.DEFAULT);
-            boolean acknowledged = createIndexResponse.isAcknowledged();
+        CreateIndexResponse createIndexResponse
+                = this.restHighLevelClient.indices().create(request, RequestOptions.DEFAULT);
+        boolean acknowledged = createIndexResponse.isAcknowledged();
 
-            log.info(acknowledged);
-        } catch (IOException var9) {
-            var9.printStackTrace();
-        }
+        log.info(acknowledged);
     }
 
     @Override
-    public <T> BulkResponse save(List<T> list, XContentBuilder mapping) {
+    public <T> BulkResponse save(List<T> list, XContentBuilder mapping) throws Exception {
 
         if(CollectionUtils.isEmpty(list)){
             return null;
         }
+
+        log.info("......start to save......");
+
+        String indexName = getIndexName(list.get(0).getClass());
+        if(isNotExists(indexName)){
+            createIndex(mapping,indexName);
+        }
+
+        BulkRequest bulkRequest = new BulkRequest();
+
+        for (T tt : list) {
+            bulkRequest.add(new IndexRequest(indexName).id(getEsId(tt)).source(JSON.toJSONString(tt), XContentType.JSON));
+        }
+        BulkResponse bulkResponse = this.restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkItemResponse[] responses = bulkResponse.getItems();
+
+        log.info("... insert success {} ",responses.length);
+
+        Arrays.stream(responses).forEach(response->{
+            if(StringUtils.isEmpty(response.getId())){
+                log.info("... response id is empty ...");
+            }
+            if(response.getFailure()!=null){
+                log.info("... response failure ...");
+            }
+        });
+        if(bulkResponse.hasFailures()){
+            log.info("... save failure {} ..." , bulkResponse.buildFailureMessage());
+        }
+
+        return bulkResponse;
+    }
+
+    @Override
+    public <T> BulkResponse saveSubDoc(List<T> list, XContentBuilder mapping) throws Exception {
         BulkResponse bulkResponse = null ;
-
-        try {
-            log.info("......start to save......");
-
+        if (CollUtil.isNotEmpty(list)) {
             String indexName = getIndexName(list.get(0).getClass());
+
             if(isNotExists(indexName)){
                 createIndex(mapping,indexName);
             }
 
             BulkRequest bulkRequest = new BulkRequest();
-
             for (T tt : list) {
-                bulkRequest.add(new IndexRequest(indexName).id(getEsId(tt)).source(JSON.toJSONString(tt), XContentType.JSON));
+
+                IndexRequest request = new IndexRequest(indexName).id(getEsId(tt)).routing(getRoutingId(tt));
+
+                //当 routing 被赋值后，清空原有字段值 ，如果本来就需要冗余字段 ，则此处代码可注释
+                setAnnotationValue(tt,null);
+
+                bulkRequest.add(request.source(JSON.toJSONString(tt), XContentType.JSON));
             }
+
             bulkResponse = this.restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+
             BulkItemResponse[] responses = bulkResponse.getItems();
             log.info("... insert success {} ",responses.length);
 
-            Arrays.stream(responses).forEach(response->{
-                if(StringUtils.isEmpty(response.getId())){
-                    log.info("... response id is empty ...");
-                }
-                if(response.getFailure()!=null){
-                    log.info("... response failure ...");
-                }
-            });
             if(bulkResponse.hasFailures()){
                 log.info("... save failure {} ..." , bulkResponse.buildFailureMessage());
             }
-        }catch (Exception e){
-            log.info("... save failure ..." , e);
-        }
-
-        return bulkResponse;
-    }
-
-    @Override
-    public <T> BulkResponse saveSubDoc(List<T> list, XContentBuilder mapping) {
-        BulkResponse bulkResponse = null ;
-        if (list != null && list.size() != 0) {
-            try {
-
-                String indexName = getIndexName(list.get(0).getClass());
-
-                if(isNotExists(indexName)){
-                    createIndex(mapping,indexName);
-                }
-
-                BulkRequest bulkRequest = new BulkRequest();
-                for (T tt : list) {
-
-                    IndexRequest request = new IndexRequest(indexName).id(getEsId(tt)).routing(getRoutingId(tt));
-
-                    //当 routing 被赋值后，清空原有字段值 ，如果本来就需要冗余字段 ，则此处代码可注释
-                    setAnnotationValue(tt,null);
-
-                    bulkRequest.add(request.source(JSON.toJSONString(tt), XContentType.JSON));
-                }
-
-                bulkResponse = this.restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-
-                BulkItemResponse[] responses = bulkResponse.getItems();
-                log.info("... insert success {} ",responses.length);
-
-                if(bulkResponse.hasFailures()){
-                    log.info("... save failure {} ..." , bulkResponse.buildFailureMessage());
-                }
-            }catch (Exception e){
-                log.error("... save failure ..." , e);
-            }
         }
         return bulkResponse;
     }
 
     @Override
-    public void deleteIndex(String... index) {
+    public void deleteIndex(String... index) throws IOException {
         DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(index);
         deleteIndexRequest.indicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN);
-        try {
-            AcknowledgedResponse response = restHighLevelClient.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
-            log.info("...... delete index {} ......",response.isAcknowledged());
-        } catch (IOException e) {
-            log.error("...... something wrong ..... ",e);
-        }
+        AcknowledgedResponse response = restHighLevelClient.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
+        log.info("...... delete index {} ......",response.isAcknowledged());
     }
 }

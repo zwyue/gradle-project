@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import static com.zhu.gradleproject.constant.Constant.ES_INDEX;
 
 
 /**
@@ -19,7 +20,7 @@ import java.util.Map;
  * @author zwy
  * @date 12/2/2020
  */
-@ESIndexData(indexName = "company_info")
+@ESIndexData(indexName = ES_INDEX)
 @Data
 public class CompanyPersonDto implements Serializable {
 
