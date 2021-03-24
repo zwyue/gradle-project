@@ -63,8 +63,8 @@ dependencies {
     //使用lombok.extern.slf4j.Slf4j注解打日志;
     //https://mvnrepository.com/artifact/org.projectlombok/lombok
     //如果你的jar包/依赖代码 仅在编译的时候需要，但是在运行时不需要依赖,就用providedCompile
-    annotationProcessor 'org.projectlombok:lombok:1.18.6'
-    compileOnly 'org.projectlombok:lombok:1.18.6'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    compileOnly 'org.projectlombok:lombok:1.18.12'
 
     //打出sql语句日志
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
@@ -92,6 +92,10 @@ dependencies {
     //7.10以上的版本，logger报错
     implementation  group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '7.9.3'
 
+    // https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client
+//    implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: '7.11.2'
+
+
     // https://mvnrepository.com/artifact/io.swagger/swagger-annotations
     implementation  group: 'io.swagger', name: 'swagger-annotations', version: '1.6.2'
 
@@ -104,6 +108,8 @@ dependencies {
     // javax是扩展类，至少java8不需要通过maven 依赖手动导入，此项目是java版本11，所以需要
     // https://mvnrepository.com/artifact/javax.annotation/jsr250-api
 //    compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
+    // https://mvnrepository.com/artifact/io.vavr/vavr
+    implementation group: 'io.vavr', name: 'vavr', version: '0.10.3'
 }
 
 //编译JAVA文件时采用UTF-8

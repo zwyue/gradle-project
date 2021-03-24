@@ -10,7 +10,6 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,16 +33,13 @@ public class BeanTools {
                 noValuePropertySet.add(pd.getName());
             } else {
                 if (Iterable.class.isAssignableFrom(propertyValue.getClass())) {
-                    Iterable iterable = (Iterable) propertyValue;
-                    Iterator iterator = iterable.iterator();
-                    if (!iterator.hasNext()) {
+                    if (!((Iterable) propertyValue).iterator().hasNext()) {
                         noValuePropertySet.add(pd.getName());
                     }
                 }
 
                 if (Map.class.isAssignableFrom(propertyValue.getClass())) {
-                    Map map = (Map) propertyValue;
-                    if (map.isEmpty()) {
+                    if (((Map) propertyValue).isEmpty()) {
                         noValuePropertySet.add(pd.getName());
                     }
                 }

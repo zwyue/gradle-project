@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,12 +68,12 @@ public class CompanyInfoController {
     @GetMapping("/parent/with/child")
     public String parentWithChild(@RequestBody QueryDto queryDto){
 
-        List<Map<String, Object>> list =
+        Map<String, Object> map =
         Try
                 .of(()->companyInfoQueryService.parentWithChild(queryDto))
-                .onFailure(Throwable::printStackTrace).getOrElse(new ArrayList<>()) ;
+                .onFailure(Throwable::printStackTrace).getOrElse(new HashMap<>()) ;
 
-        return new Gson().toJson(list);
+        return new Gson().toJson(map);
     }
 }
 

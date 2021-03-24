@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -294,7 +295,7 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
     }
 
     @Override
-    public List<Map<String, Object>> parentWithChild(QueryDto queryDto) throws Exception {
+    public Map<String, Object> parentWithChild(QueryDto queryDto) throws Exception {
 
         BoolQueryBuilder parentQueryBuilder = QueryBuilders.boolQuery();
 
@@ -330,6 +331,20 @@ public class CompanyInfoServiceImpl extends ServiceImpl<CompanyInfoDao, CompanyI
         PageList<JSONObject> pageList = esSearchService.searchHasInnerHits(parentQueryBuilder, psh
                 ,new String[]{"perName","perId","personCerts"},ES_INDEX);
 
-        return null ;
+        List<JSONObject> jsonObjectList = pageList.getList();
+        jsonObjectList.forEach(jo -> {
+            JSONArray jsonArray = jo.getJSONArray("innerHits");
+            if(CollUtil.isNotEmpty(jsonArray)) {
+                jo.putAll((JSONObject) jsonArray.get(0));
+                jo.remove("innerHits");
+                jo.remove("innerHitsTotal");
+            }
+//            jo.put("district", qualAptService.queryDistrictNameByCode(jo.getString("district")));
+        });
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", jsonObjectList);
+        map.put("total", pageList.getTotalElements());
+        return map ;
     }
 }

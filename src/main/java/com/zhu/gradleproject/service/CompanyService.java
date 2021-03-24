@@ -93,5 +93,5 @@ public interface CompanyService extends IService<CompanyInfo> {
      * @author zwy
      * @date 3/16/2021 4:51 PM
      */
-    List<Map<String, Object>> parentWithChild(QueryDto queryDto) throws Exception;
+    Map<String, Object> parentWithChild(QueryDto queryDto) throws Exception;
 }
